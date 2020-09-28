@@ -167,6 +167,9 @@ const Arrows = styled.span`
   position: absolute;
   top: 8vh;
   text-align: center;
+  &:hover {
+    cursor: pointer;
+  }
   ${DOODAD_TEXT_STYLES}
 `;
 
@@ -259,12 +262,21 @@ function toCSS (js, cb) {
 }
 
 const CODE_FLUSH = 400;
+const LANGUAGES_SUPPORTED = {
+  CSS: 'css',
+  JS: 'js'
+}
+
 class Root extends Component {
   constructor (...args) {
     super(...args);
 
-    this.state = { cssCode: INITIAL_CSS_CODE, jsCode: toJS(INITIAL_CSS_CODE) };
-    
+    this.state = {
+      cssCode: INITIAL_CSS_CODE,
+      jsCode: toJS(INITIAL_CSS_CODE),
+      panPosition: [LANGUAGES_SUPPORTED.CSS, LANGUAGES_SUPPORTED.JS]
+    };
+
     this.onEditCssCode = debounce(this.onEditCssCode.bind(this), CODE_FLUSH);
     this.onEditJsCode = debounce(this.onEditJsCode.bind(this), CODE_FLUSH);
   }
@@ -285,23 +297,40 @@ class Root extends Component {
     }
   }
 
+  changePanPosition = () => {
+    this.setState({
+      panPosition: this.state.panPosition.reverse()
+    })
+  }
+
+  getEditCodeProps = () => ({
+    [LANGUAGES_SUPPORTED.JS]: {
+      mode: 'javascript',
+      label: 'JS',
+      onChange: this.onEditJsCode,
+      value: this.state.jsCode
+    },
+    [LANGUAGES_SUPPORTED.CSS]: {
+      mode: 'scss',
+      label: 'CSS',
+      onChange: this.onEditCssCode,
+      value: this.state.cssCode
+    }
+  });
+
   render () {
+    const [langToTheLeft, langToTheRight] = this.state.panPosition;
+    const editCodeProps = this.getEditCodeProps();
+
     return (
       <Shell>
         <EditCode
-          mode='scss'
-          label='CSS'
-          onChange={this.onEditCssCode}
-          value={this.state.cssCode}
+          {...editCodeProps[langToTheLeft]}
         />
-        <Arrows>{'⟷'}</Arrows>
+        <Arrows onClick={this.changePanPosition}>{'⟷'}</Arrows>
         <EditCode
-          mode='javascript'
-          label='JS'
-          onChange={this.onEditJsCode}
-          value={this.state.jsCode}
+          {...editCodeProps[langToTheRight]}
         />
-
         <Ribbon bg={theme.TERTIARY} fg={theme.PRIMARY} />
       </Shell>
     );
